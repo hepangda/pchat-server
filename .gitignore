@@ -36,3 +36,6 @@
 
 # Test Files
 *test*
+
+# VSCode Config
+*.json

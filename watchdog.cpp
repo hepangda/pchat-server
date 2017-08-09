@@ -1,0 +1,1 @@
+bool WATCHDOG_DPKG = 1;
