@@ -12,6 +12,7 @@ int json_tosql(string &st) {
 		}
 	}
 	st[st.length() - 1] = '\0';
+	return 0;
 }
 
 int json_append(Json::Value &lt, const string apwhat, string newitem) {

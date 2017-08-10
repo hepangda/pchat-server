@@ -5,20 +5,19 @@ using namespace std;
 static char cache[10000];//FIXME:TO ENSURE THREAD SAFE!!!!
 
 extern mysqlpp::Connection dbconn;
+
 //注册账户
 //如果注册失败，SQL语句会执行失败，不必自己判断
 //@param msg 请直接传收到包的json
 //@return 0代表注册成功 1代表注册失败
-
 int srv_register(Json::Value msg) {
     Query query = dbconn.query();
     static const char sqlhead[] = "insert into users(un,pwd,qst,ans,fl,gl,mute) value(";
-    static const char sqltail[] = ",\"{\"fl\":[]}\",\"{\"gl\":[]}\",\"{\"mute\":[]    }\");";
+    static const char sqltail[] = ",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
 
     sprintf(cache, "%s\"%s\",\"%s\",%d,\"%s\"%s", sqlhead, msg["un"].asCString(),
                     msg["pwd"].asCString(), msg["qst"].asInt(),
                     msg["ans"].asCString(), sqltail);
-                    string nd = '\"' + msg["un"].asString() + "\",";
     query << cache;
     return !query.exec();
 }

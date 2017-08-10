@@ -23,16 +23,16 @@ create table groups (
 
 create table privatecr (
     id serial NOT NULL,
-    fromid int NOT NULL,
-    toid int NOT NULL,
-    tm timestamp NOT NULL,
+    fromun varchar(50) NOT NULL,
+    toun varchar(50) NOT NULL,
     content text,
     PRIMARY KEY(id)
 );
 
+
 create table groupcr (
     id serial NOT NULL,
-    gid int NOT NULL,
+    gn varchar(50) NOT NULL,
     tm timestamp NOT NULL,
     content text,
     PRIMARY KEY(id)
