@@ -44,5 +44,5 @@ void dpkg_distribute() {
 }
 
 int dpkg_login_request(pkg_t pkg) {
-    
+    return 0;
 }

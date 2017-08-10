@@ -23,3 +23,11 @@ int json_append(Json::Value &lt, const string apwhat, string newitem) {
     lt[apwhat].append(newitem);
     return 0;
 }
+
+int json_findarray(Json::Value jv, const string apwhat, const string item) {
+	for (auto i = 0u; i < jv[apwhat].size(); i++) {
+		if (jv[apwhat][i] == item)
+			return i;
+	}
+	return -1;
+}
