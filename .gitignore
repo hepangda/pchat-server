@@ -39,3 +39,6 @@
 
 # VSCode Config
 *.json
+
+# Database
+database_connstr.h
