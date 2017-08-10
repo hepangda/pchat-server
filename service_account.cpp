@@ -2,7 +2,6 @@
 
 using namespace mysqlpp;
 using namespace std;
-static char cache[10000];//FIXME:TO ENSURE THREAD SAFE!!!!
 
 extern mysqlpp::Connection dbconn;
 
@@ -12,13 +11,15 @@ extern mysqlpp::Connection dbconn;
 //@return 0代表注册成功 1代表注册失败
 int srv_register(Json::Value msg) {
     Query query = dbconn.query();
-    static const char sqlhead[] = "insert into users(un,pwd,qst,ans,fl,gl,mute) value(";
-    static const char sqltail[] = ",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
+    char cache[50];
+    sprintf(cache, "%d", msg["pwd"].asInt());
 
-    sprintf(cache, "%s\"%s\",\"%s\",%d,\"%s\"%s", sqlhead, msg["un"].asCString(),
-                    msg["pwd"].asCString(), msg["qst"].asInt(),
-                    msg["ans"].asCString(), sqltail);
-    query << cache;
+    string sql = "insert into users(un,pwd,qst,ans,fl,gl,mute) value(\"" + 
+                  msg["un"].asString() + "\",\"" + msg["pwd"].asString() +
+                  "\"," + cache + ",\"" + msg["ans"].asString() + 
+                  ",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
+
+    query << sql;
     return !query.exec();
 }
 
@@ -27,9 +28,10 @@ int srv_register(Json::Value msg) {
 //@return 0代表用户名密码匹配，1代表用户名密码不匹配
 int srv_checkpwd(Json::Value msg) {
     Query query = dbconn.query();
-    sprintf(cache, "select pwd from users where un=\"%s\" and pwd=\"%s\";", 
-                            msg["un"].asCString(), msg["pwd"].asCString());
-    query << cache;
+    string sql = "select pwd from users where un=\"" + msg["un"].asString() +
+                 "\" and pwd =\"" + msg["pwd"].asString() + "\";";
+
+    query << sql;
     StoreQueryResult res = query.store();
     return res.size() != 1;
 }
@@ -39,8 +41,9 @@ int srv_checkpwd(Json::Value msg) {
 //@return 0代表有此用户，1代表无此用户
 int srv_checkuser(string un) {
     Query query = dbconn.query();
-    sprintf(cache, "select un from users where un=%s;", un.c_str());
-    query << cache;
+    string sql = "select un from users where un=\"" + un + "\";";
+    query << sql;
+
     StoreQueryResult res = query.store();
     return res.size() != 1;
 }

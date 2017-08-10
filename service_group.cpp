@@ -2,18 +2,16 @@
 
 using namespace mysqlpp;
 using namespace std;
-static char cache[10000];//FIXME:TO ENSURE THREAD SAFE!!!!
 extern mysqlpp::Connection dbconn;
 
 
 int srv_addgroup(Json::Value msg) {
     Query query = dbconn.query();
-    static const char sqlhead[] = "insert into groups(gn,gml,gcreater,gmgr) value(";
-    static const char sqltail[] = ", \"{\\\"gmgr\\\":[]}\");";
+    string sql = "insert into groups(gn,gml,gcreater,gmgr) value(\"" +
+                 msg["gn"].asString() + "\",\"{\\\"gml\\\":[]}\",\"" +
+                 msg["un"].asString() + "\",\"{\\\"gmgr\\\":[]}\")";
 
-    sprintf(cache, "%s\"%s\",\"{\\\"gm\\\":[]}\",\"%s\"%s", sqlhead, msg["gn"].asCString(),
-                    msg["un"].asCString(), sqltail);
-    query << cache;
+    query << sql;
     return !query.exec();
 }
 
@@ -23,30 +21,31 @@ int srv_delgroup(Json::Value msg) {
         return 1;
     
     Query query = dbconn.query();
-    sprintf(cache, "delete from groups where gn=%s", msg["gn"].asCString());
-    query << cache;
-    //TODO:delete all record
+    string sql = "delete from groups where gn=\"" + msg["gn"].asString() + "\";";
+    query << sql;
+    srv_delcr_group(msg["gn"].asString());
     return !query.exec();
 }
 
-//@return 2代表成员，1代表管理员，0代表群主
+//@return 2代表成员，1代表管理员，0代表群主,3代表群不存在
 int srv_getgst(string gn, string un) {
     Query query = dbconn.query();
-    sprintf(cache, "select gml from groups where gn=%s;", gn.c_str());
-    query << cache;
-    
+    string sql = "select * from groups wherer gn=\"" + gn + "\";";
+    query << sql;
+
     StoreQueryResult res = query.store();
-    Json::Value gm;
-    j_reader.parse(res[0]["gmgr"].c_str(), gm);
-    int ret = json_findarray(gm, "gm", un.c_str());
+
+    if (res.size() == 0)
+        return 3;
+
+    Json::Value gmgr;
+    j_reader.parse(res[0]["gmgr"].c_str(), gmgr);
+    int ret = json_findarray(gmgr, "gmgr", un.c_str());
+
     if (ret != -1)
         return 1;
 
-    sprintf(cache, "select gcreater from groups where gn=%s;", gn.c_str());
-    query << cache;
-    res = query.store();
-
-    if (gn == string(res[0]["gcreater"].c_str()))
+    if (un == string(res[0]["gcreater"].c_str()))
         return 0;
 
     return 2;
@@ -54,8 +53,8 @@ int srv_getgst(string gn, string un) {
 
 int srv_addtogroup(Json::Value msg) {
     Query query = dbconn.query();
-    sprintf(cache, "select gl from users where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    string sql = "select gl from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -67,15 +66,16 @@ int srv_addtogroup(Json::Value msg) {
     string result = j_writer.write(gl);
     json_tosql(result);
 
-    sprintf(cache, "update users set gl=\"%s\" where un=\"%s\";", 
-                        result.c_str(), msg["un"].asCString());
-    query << cache;
+    sql = "update users set gl=\"" + result + "\" where un=\"" + 
+          msg["un"].asString() + "\";";
+
+    query << sql;
     if(!query.exec()) {
         return 1;
     }
 
-    sprintf(cache, "select gml from groups where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    sql = "select gml from groups where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     res = query.store();
 
@@ -87,16 +87,17 @@ int srv_addtogroup(Json::Value msg) {
     result = j_writer.write(gml);
     json_tosql(result);
 
-    sprintf(cache, "update groups set gml=\"%s\" where gn=\"%s\";",
-                         result.c_str(), msg["gn"].asCString());
-    query << cache;
+    sql = "update groups set gml=\"" + result + "\" where gn=\"" +
+          msg["gn"].asString() + "\";";
+
+    query << sql;
     return !query.exec();
 }
 
 int srv_delfromgroup(Json::Value msg) {
     Query query = dbconn.query();
-    sprintf(cache, "select gl from users where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    string sql = "select gl from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -111,15 +112,14 @@ int srv_delfromgroup(Json::Value msg) {
     string result = j_writer.write(gl);
     json_tosql(result);
 
-    sprintf(cache, "update users set gl=\"%s\" where un=\"%s\";", 
-                        result.c_str(), msg["un"].asCString());
-    query << cache;
+    sql = "update users set gl=\"" + result + "\" where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
     if(!query.exec()) {
         return 1;
     }
 
-    sprintf(cache, "select gml from groups where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    sql = "select gml from groups where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     res = query.store();
 
@@ -134,17 +134,16 @@ int srv_delfromgroup(Json::Value msg) {
     result = j_writer.write(gml);
     json_tosql(result);
 
-    sprintf(cache, "update groups set gml=\"%s\" where gn=\"%s\";",
-                         result.c_str(), msg["gn"].asCString());
-    query << cache;
+    sql = "update groups set gml=\"" + result + "\" where gn=\"" + msg["gn"].asString() + "\";";
+    query << sql;
     return !query.exec();
 }
 
 
 int srv_getgm(Json::Value msg, string &store) {
     Query query = dbconn.query();
-    sprintf(cache, "select gml from users where gn=\"%s\";", msg["gn"].asCString());
-    query << cache;
+    string sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
     if (res.size() == 0)

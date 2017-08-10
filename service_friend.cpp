@@ -14,8 +14,8 @@ extern vector<string> OnlineList;
 //@return 0代表添加成功，1代表添加失败
 static int srv_addfriend_atomic(string un, string afwho) {
     Query query = dbconn.query();
-    sprintf(cache, "select fl from users where un=\"%s\";", un.c_str());
-    query << cache;
+    string sql = "select fl from users where un=\"" + un + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -27,15 +27,15 @@ static int srv_addfriend_atomic(string un, string afwho) {
     string result = j_writer.write(fl);
     json_tosql(result);
 
-    sprintf(cache, "update users set fl=\"%s\" where un=\"%s\";", result.c_str(), un.c_str());
-    query << cache;
+    sql = "update users set fl=\"" + result + "\" where un=\"" + un + "\";";
+    query << sql;
     return !query.exec();
 }
 
 static int srv_delfriend_atomic(string un, string dfwho) {
     Query query = dbconn.query();
-    sprintf(cache, "select fl from users where un=\"%s\";", un.c_str());
-    query << cache;
+    string sql = "select fl from users where un=\"" + un + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -50,8 +50,8 @@ static int srv_delfriend_atomic(string un, string dfwho) {
     string result = j_writer.write(fl);
     json_tosql(result);
 
-    sprintf(cache, "update users set fl=\"%s\" where un=\"%s\";", result.c_str(), un.c_str());
-    query << cache;
+    sql = "update users set fl=\"" + result + "\" where un=\"" + un + "\";";
+    query << sql;
     return !query.exec();
 }
 
@@ -80,14 +80,14 @@ int srv_delfriend(Json::Value msg) {
         //FIXME:撤销掉上一次的原子操作
         return 1;
     }
-    //TODO:删除掉两人的聊天记录
+    srv_delcr_private(msg["un"].asString(), msg["dfwho"].asString());
     return 0;
 }
 
 int srv_getfl(Json::Value msg, string &store) {
     Query query = dbconn.query();
-    sprintf(cache, "select fl from users where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    string sql = "select fl from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
     if (res.size() == 0)
@@ -98,8 +98,8 @@ int srv_getfl(Json::Value msg, string &store) {
 
 int srv_getgl(Json::Value msg, string &store) {
     Query query = dbconn.query();
-    sprintf(cache, "select gl from users where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    string sql = "select gl from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
     if (res.size() == 0)
@@ -111,8 +111,8 @@ int srv_getgl(Json::Value msg, string &store) {
 //@return 2代表被屏蔽，1代表离线，0代表在线
 int srv_getfst(string un) {
     Query query = dbconn.query();
-    sprintf(cache, "select mute from users where un=\"%s\";", un.c_str());
-    query << cache;
+    string sql = "select mute from users where un=\"" + un + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
     Json::Value mute;
@@ -128,8 +128,8 @@ int srv_getfst(string un) {
 
 int srv_mute_enable(Json::Value msg) {
     Query query = dbconn.query();
-    sprintf(cache, "select mute from users where un=\"%s\";", msg["un"].asCString());
-    query << cache;
+    string sql = "select mute from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -141,16 +141,15 @@ int srv_mute_enable(Json::Value msg) {
     string result = j_writer.write(mute);
     json_tosql(result);
 
-    sprintf(cache, "update users set mute=\"%s\" where un=\"%s\";", 
-                            result.c_str(), msg["un"].asCString());
-    query << cache;
+    sql = "update users set mute=\"" + result + "\" where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
     return !query.exec();
 }
 
 int srv_mute_disable(Json::Value msg) {
     Query query = dbconn.query();
-    sprintf(cache, "select mute from users where un=\"%s\";", msg["mute"].asCString());
-    query << cache;
+    string sql = "select mute from users where un=\"" + msg["mute"].asString() + "\"";
+    query << sql;
 
     StoreQueryResult res = query.store();
 
@@ -165,8 +164,8 @@ int srv_mute_disable(Json::Value msg) {
     string result = j_writer.write(mute);
     json_tosql(result);
 
-    sprintf(cache, "update mute set mute=\"%s\" where un=\"%s\";", 
-                            result.c_str(), msg["un"].asCString());
+    sql = "update users set mute=\"" + result + "\" where un=\"" + msg["un"].asString() + "\";";
+
     query << cache;
     return !query.exec();
 }
