@@ -1,0 +1,1 @@
+#define EXTERN_WATCHDOGS extern bool WATCHDOG_DPKG;

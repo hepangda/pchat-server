@@ -1,39 +1,37 @@
-SOURCES = $(wildcard *.cpp)
-OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
+OBJECTS = service/json_assist.o service/service_account.o service/service_database.o \
+		service/service_friend.o service/service_group.o service/service_record.o \
+		network/spkg.o network/dpkg.o network/package.o extra/watchdog.o \
+		pchat-server.o
 CXXFLAG = -std=c++14 -I ./include -I /usr/include/mysql++ -I /usr/include/mysql -Wall -Wno-deprecated -lmysqlpp -ljsoncpp 
 
 pchat-server: $(OBJECTS)
 	g++ $(CXXFLAG) -o pchat-server $(OBJECTS)
 
-# $(OBJECTS): $(SOURCES)
-	# g++ $(CXXFLAG) -c $(SOURCES)
-io.o : io.cpp
-	g++ $(CXXFLAG) -c io.cpp
-json_assist.o : json_assist.cpp
-	g++ $(CXXFLAG) -c json_assist.cpp
-network.o : network.cpp
-	g++ $(CXXFLAG) -c network.cpp
-package.o : package.cpp
-	g++ $(CXXFLAG) -c package.cpp
-pchat-server.o : pchat-server.cpp
-	g++ $(CXXFLAG) -c pchat-server.cpp
-service_account.o : service_account.cpp
-	g++ $(CXXFLAG) -c service_account.cpp
-service_database.o : service_database.cpp
-	g++ $(CXXFLAG) -c service_database.cpp
-service_friend.o : service_friend.cpp
-	g++ $(CXXFLAG) -c service_friend.cpp
-service_group.o : service_group.cpp
-	g++ $(CXXFLAG) -c service_group.cpp
-service_record.o : service_record.cpp
-	g++ $(CXXFLAG) -c service_record.cpp
-testDriver.o : testDriver.cpp
-	g++ $(CXXFLAG) -c testDriver.cpp
-watchdog.o : watchdog.cpp
-	g++ $(CXXFLAG) -c watchdog.cpp
-# .o : .cpp
-	# g++ $(CXXFLAG) -c
+service/json_assist.o : service/json_assist.cpp
+	g++ $(CXXFLAG) -c service/json_assist.cpp -o service/json_assist.o
+service/service_account.o : service/service_account.cpp
+	g++ $(CXXFLAG) -c service/service_account.cpp -o service/service_account.o
+service/service_database.o : service/service_database.cpp
+	g++ $(CXXFLAG) -c service/service_database.cpp -o service/service_database.o
+service/service_friend.o : service/service_friend.cpp
+	g++ $(CXXFLAG) -c service/service_friend.cpp -o service/service_friend.o
+service/service_group.o : service/service_group.cpp
+	g++ $(CXXFLAG) -c service/service_group.cpp -o service/service_group.o
+service/service_record.o : service/service_record.cpp
+	g++ $(CXXFLAG) -c service/service_record.cpp  -o service/service_record.o
 
+network/spkg.o : network/spkg.cpp
+	g++ $(CXXFLAG) -c network/spkg.cpp -o network/spkg.o
+network/dpkg.o : network/dpkg.cpp
+	g++ $(CXXFLAG) -c network/dpkg.cpp  -o network/dpkg.o
+network/package.o : network/package.cpp
+	g++ $(CXXFLAG) -c network/package.cpp  -o network/package.o
+
+extra/watchdog.o : extra/watchdog.cpp
+	g++ $(CXXFLAG) -c extra/watchdog.cpp -o extra/watchdog.o
+
+pchat-server.o : pchat-server.cpp
+	g++ $(CXXFLAG) -c pchat-server.cpp -o pchat-server.o
 
 .PHONY: clean
 clean :

@@ -1,31 +1,29 @@
 #include<service.h>
+#include<dpkg.h>
+#include<watchdog.h>
 #include<queue>
 #include<mutex>
 #include<map>
 #include<functional>
-#include<package.h>
-
 
 using namespace std;
-int dpkg_login_request(pkg_t pkg);
-queue<pkg_t> qPackage;
-queue<pkg_t> qSend;
-mutex lkPackage;
+
+EXTERN_PKG_QM;
+EXTERN_WATCHDOGS;
 map<uint16_t, function<int(pkg_t)> > mPkgfunc;
-extern bool WATCHDOG_DPKG;
 
 void dpkg_init() {
-    // mPkgfunc[PT_LOGIN_REQ] = dpkg_login_request;
-    // mPkgfunc[PT_REG_REQ] = dpkg_register_request;
+    mPkgfunc[PT_LOGIN_REQ] = dpkg_login_request;
+    mPkgfunc[PT_REG_REQ] = dpkg_register_request;
     // mPkgfunc[PT_RESETPWD_REQ] = ;
-    // mPkgfunc[PT_ADDFRI_REQ] = dpkg_addfriend_request;
-    // mPkgfunc[PT_DELFRI_REQ] = ;
+    mPkgfunc[PT_ADDFRI_REQ] = dpkg_addfriend_request;
+    mPkgfunc[PT_DELFRI_REQ] = dpkg_delfriend_request;
     // mPkgfunc[PT_ADDFRI_APP] = ;
     // mPkgfunc[PT_ONLINE] = ;
     // mPkgfunc[PT_OFFLINE] = ;
-    // mPkgfunc[PT_REFRESH_FL] = ;
-    // mPkgfunc[PT_REFRESH_GL] = ;
-    // mPkgfunc[PT_REFRESH_GM] = ;
+    mPkgfunc[PT_REFRESH_FL] = dpkg_refreshfl_request;
+    mPkgfunc[PT_REFRESH_GL] = dpkg_refreshgl_request;
+    mPkgfunc[PT_REFRESH_GM] = dpkg_refreshgm_request;
     // mPkgfunc[PT_MSG_GRP] = ;
     // mPkgfunc[PT_MSG_FRI] = ;
     // mPkgfunc[PT_PKEY_REQ] = ;
@@ -37,10 +35,10 @@ void dpkg_init() {
 
 void dpkg_distribute() {
     while (WATCHDOG_DPKG) {
-        lkPackage.lock();
-        pkg_t thispkg = qPackage.front();
-        qPackage.pop();
-        lkPackage.unlock();
+        pkglk_recv.lock();
+        pkg_t thispkg = qpkgRecv.front();
+        qpkgRecv.pop();
+        pkglk_recv.unlock();
 
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
@@ -61,7 +59,7 @@ int dpkg_login_request(pkg_t pkg) {
     recvpkg.head.wopr = PT_LOGIN_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;
 }
 
@@ -80,7 +78,7 @@ int dpkg_register_request(pkg_t pkg) {
     recvpkg.head.wopr = PT_REG_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;
 }
 
@@ -100,7 +98,7 @@ int dpkg_addfriend_request(pkg_t pkg) {
     recvpkg.head.wopr = PT_ADDFRI_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;
 }
 
@@ -120,7 +118,7 @@ int dpkg_delfriend_request(pkg_t pkg) {
     recvpkg.head.wopr = PT_DELFRI_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;
 }
 
@@ -148,7 +146,7 @@ int dpkg_refreshfl_request(pkg_t pkg) {
     recvpkg.head.wopr = PT_REFRESH_FL;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;    
 }
 
@@ -173,10 +171,30 @@ int dpkg_refreshgl_request(pkg_t pkg) {
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
-    cout << recvpkg.jsdata << endl;
     recvpkg.head.wopr = PT_REFRESH_GL;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
-    qSend.push(recvpkg);
+    qpkgSend.push(recvpkg);
     return 0;
+}
+
+int dpkg_refreshgm_request(pkg_t pkg) {
+    Json::Value req, res;
+    Json::Reader reader;
+    Json::FastWriter writer;
+
+    reader.parse(pkg.jsdata, req);
+    string gml;
+    int ret = srv_getgm(req, gml);
+    reader.parse(gml, res);
+    res["un"] = req["un"].asString();
+    res["res"] = ret;
+
+    pkg_t recvpkg;
+    recvpkg.jsdata = writer.write(res);
+    recvpkg.head.wopr = PT_REFRESH_GM;
+    recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
+
+    qpkgSend.push(recvpkg);
+    return 0;    
 }
