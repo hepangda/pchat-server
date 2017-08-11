@@ -12,12 +12,12 @@ extern mysqlpp::Connection dbconn;
 int srv_register(Json::Value msg) {
     Query query = dbconn.query();
     char cache[50];
-    sprintf(cache, "%d", msg["pwd"].asInt());
+    sprintf(cache, "%d", msg["qst"].asInt());
 
     string sql = "insert into users(un,pwd,qst,ans,fl,gl,mute) value(\"" + 
                   msg["un"].asString() + "\",\"" + msg["pwd"].asString() +
                   "\"," + cache + ",\"" + msg["ans"].asString() + 
-                  ",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
+                  "\",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
 
     query << sql;
     return !query.exec();

@@ -4,7 +4,7 @@
 
 using namespace mysqlpp;
 using namespace std;
-static char cache[10000];//FIXME:TO ENSURE THREAD SAFE!!!!
+
 extern mysqlpp::Connection dbconn;
 extern vector<string> OnlineList;
 
@@ -109,7 +109,7 @@ int srv_getgl(Json::Value msg, string &store) {
 }
 
 //@return 2代表被屏蔽，1代表离线，0代表在线
-int srv_getfst(string un) {
+int srv_getfst(string un, string who) {
     Query query = dbconn.query();
     string sql = "select mute from users where un=\"" + un + "\";";
     query << sql;
@@ -117,11 +117,11 @@ int srv_getfst(string un) {
     StoreQueryResult res = query.store();
     Json::Value mute;
     j_reader.parse(res[0]["mute"].c_str(), mute);
-    int ret = json_findarray(mute, "mute", un.c_str());
+    int ret = json_findarray(mute, "mute", who);
     if (ret != -1)
         return 2;
     
-    if (find(OnlineList.begin(), OnlineList.end(), un) != OnlineList.end())
+    if (find(OnlineList.begin(), OnlineList.end(), who) != OnlineList.end())
         return 0;
     return 1;
 }
@@ -148,7 +148,7 @@ int srv_mute_enable(Json::Value msg) {
 
 int srv_mute_disable(Json::Value msg) {
     Query query = dbconn.query();
-    string sql = "select mute from users where un=\"" + msg["mute"].asString() + "\"";
+    string sql = "select mute from users where un=\"" + msg["un"].asString() + "\";";
     query << sql;
 
     StoreQueryResult res = query.store();
@@ -165,7 +165,9 @@ int srv_mute_disable(Json::Value msg) {
     json_tosql(result);
 
     sql = "update users set mute=\"" + result + "\" where un=\"" + msg["un"].asString() + "\";";
-
-    query << cache;
+    query << sql;
     return !query.exec();
 }
+
+
+//TESTIT:

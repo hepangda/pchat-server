@@ -4,13 +4,12 @@ using namespace mysqlpp;
 using namespace std;
 extern mysqlpp::Connection dbconn;
 
-
+//TODO:add setmgr cancelmgr
 int srv_addgroup(Json::Value msg) {
     Query query = dbconn.query();
-    string sql = "insert into groups(gn,gml,gcreater,gmgr) value(\"" +
-                 msg["gn"].asString() + "\",\"{\\\"gml\\\":[]}\",\"" +
+    string sql = "insert into groups(gn,gml,gcreater,gmgr) value(\"" + msg["gn"].asString() +
+                 "\",\"{\\\"gml\\\":[\\\"" + msg["un"].asString() + "\\\"]}\",\"" +
                  msg["un"].asString() + "\",\"{\\\"gmgr\\\":[]}\")";
-
     query << sql;
     return !query.exec();
 }
@@ -30,7 +29,7 @@ int srv_delgroup(Json::Value msg) {
 //@return 2代表成员，1代表管理员，0代表群主,3代表群不存在
 int srv_getgst(string gn, string un) {
     Query query = dbconn.query();
-    string sql = "select * from groups wherer gn=\"" + gn + "\";";
+    string sql = "select * from groups where gn=\"" + gn + "\";";
     query << sql;
 
     StoreQueryResult res = query.store();
@@ -74,7 +73,7 @@ int srv_addtogroup(Json::Value msg) {
         return 1;
     }
 
-    sql = "select gml from groups where un=\"" + msg["un"].asString() + "\";";
+    sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
     query << sql;
 
     res = query.store();
@@ -118,7 +117,7 @@ int srv_delfromgroup(Json::Value msg) {
         return 1;
     }
 
-    sql = "select gml from groups where un=\"" + msg["un"].asString() + "\";";
+    sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
     query << sql;
 
     res = query.store();
@@ -150,4 +149,47 @@ int srv_getgm(Json::Value msg, string &store) {
         return 1;
     store = res[0]["gml"].c_str();
     return 0;
+}
+
+int srv_setmgr(string gn, string afwho) {
+    Query query = dbconn.query();
+    string sql = "select gmgr from groups where gn=\"" + gn + "\";";
+    query << sql;
+
+    StoreQueryResult res = query.store();
+
+    Json::Value gmgr;
+    j_reader.parse(res[0]["gmgr"].c_str(), gmgr);
+    if (json_append(gmgr, "gmgr", afwho) == -1) {
+        return 1;
+    }
+    string result = j_writer.write(gmgr);
+    json_tosql(result);
+
+    sql = "update groups set gmgr=\"" + result + "\" where gn=\"" + gn + "\";";
+    query << sql;
+    return !query.exec();
+}
+
+int srv_canmgr(string gn, string dfwho) {
+    Query query = dbconn.query();
+    string sql = "select gmgr from groups where gn=\"" + gn + "\";";
+    query << sql;
+
+    StoreQueryResult res = query.store();
+
+    Json::Value gmgr;
+    j_reader.parse(res[0]["gmgr"].c_str(), gmgr);
+    int idx = json_findarray(gmgr, "gmgr", dfwho);
+    if (idx == -1) {
+        return 1;
+    }
+    Json::Value done;
+    gmgr["gmgr"].removeIndex(idx, &done);
+    string result = j_writer.write(gmgr);
+    json_tosql(result);
+
+    sql = "update groups set gmgr=\"" + result + "\" where gn=\"" + gn + "\";";
+    query << sql;
+    return !query.exec();
 }

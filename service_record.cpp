@@ -33,7 +33,7 @@ int srv_cr_private(string from, string to, string content) {
 int srv_delcr_group(string gn) {
     Query query = dbconn.query();
 
-    string sql = "delete from groupcr where un=\"" + gn + "\";";
+    string sql = "delete from groupcr where gn=\"" + gn + "\";";
     query << sql;
 
     return !query.exec();
@@ -43,10 +43,12 @@ int srv_delcr_private(string un1, string un2) {
     Query query = dbconn.query();
     string sql = "delete from privatecr where fromun=\"" + un1 + 
                 "\" and toun=\"" + un2 + "\";";
-    
+
     query << sql;
+    query.exec();
     sql = "delete from privatecr where fromun=\"" + un2 + 
             "\" and toun=\"" + un1 + "\";";
     query << sql;
+
     return !query.exec();
 }

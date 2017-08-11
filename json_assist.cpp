@@ -5,13 +5,20 @@ Json::Reader j_reader;
 Json::FastWriter j_writer;
 
 int json_tosql(string &st) {
-	for (auto i = 0u; i < st.length(); i++) {
+	auto i = 0u;
+	if (st[0] == '\"') {
+		st.insert(0, "\\");
+		i++;
+	}
+
+	for (; i < st.length() - 1; i++) {
 		if (st[i + 1] == '\"') {
 			st.insert(i + 1, "\\");
 			i++;
 		}
 	}
-	st[st.length() - 1] = '\0';
+	if (st[st.length() - 1] == '\n')
+		st[st.length() - 1] = '\0';
 	return 0;
 }
 

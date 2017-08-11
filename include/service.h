@@ -14,7 +14,7 @@ int srv_addfriend(Json::Value msg);
 int srv_delfriend(Json::Value msg);
 int srv_getfl(Json::Value msg, std::string &store);
 int srv_getgl(Json::Value msg, std::string &store);
-int srv_getfst(std::string un);
+int srv_getfst(std::string un, std::string who);
 int srv_mute_enable(Json::Value msg);
 int srv_mute_disable(Json::Value msg);
 
@@ -25,6 +25,8 @@ int srv_getgst(std::string gn, std::string un);
 int srv_addtogroup(Json::Value msg);
 int srv_delfromgroup(Json::Value msg);
 int srv_getgm(Json::Value msg, std::string &store);
+int srv_setmgr(std::string gn, std::string afwho);
+int srv_canmgr(std::string gn, std::string dfwho);
 
 //service_record
 int srv_delcr_private(std::string un1, std::string un2);

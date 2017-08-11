@@ -63,7 +63,7 @@ struct pkg_t {
 |      |                             | "fl":[{"fun":"__","fst":<0O1F2M},...]}         |
 |  115 | Refresh Grouplist Request   | {"un":"__"}                                    |
 |  116 | Grouplist Result            | {"un":"__","res":<0S1F>,"gl":                  |
-|      |                             | [{"gid":__,"gn":"__","gpw":<0L1G2M>},...]}     |
+|      |                             | [{"gn":"__","gpw":<0L1G2M>},...]}              |
 |  117 | Refresh Groupmember Request | {"un":"__"}                                    |
 |  118 | Groupmember Result          | {"un":"__","res":<0S1F>,                       |
 |      |                             | "gml":["gmn1","gmn2",...]}                     |
