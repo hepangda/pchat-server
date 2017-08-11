@@ -16,13 +16,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***************************************************************************/
 #pragma once
-#include<portal/multiplexing.h>
 #include<string>
+#include<unistd.h>
+#include<sys/epoll.h>
 #include<sys/socket.h>
 #include<netinet/in.h>
-#include<unistd.h>
 
 namespace libportal {
+
+class Net {
+public:
+    static std::string GetServerIP(std::string server);
+};
 
 class Socket {
 protected:
@@ -40,12 +45,10 @@ private:
     int client_socket;
 public:
     friend class TCPSocket;
-    //friend class MultiplexEpoll;
-    int getfd() {
-        return client_socket;
-    }
-    int Read(std::string &dat);
-    int Write(std::string dat);
+    friend class MultiplexEpoll;
+    int Read(char *dest, int bytes);
+    int Read(std::string &dest, int bytes);
+    int Write(char *dest, int bytes);
     int Close();
 }; 
 
@@ -59,18 +62,32 @@ public:
     int Connect();
     int Listen();
     TCPClient Accept();
-    int Write(std::string dat);
-    int Read(std::string &dat);
+    int Write(char *dest, int bytes);
+    int Read(char *dest, int bytes);
+    int Read(std::string &dest, int bytes);
 
 };
 
-class UDPSocket: public Socket {
+class MultiplexEpollEvent {
 private:
-
+    epoll_event self;
 public:
-    UDPSocket(std::string address, unsigned int port);
-    ~UDPSocket();
+    friend class MultiplexEpoll;
+    TCPClient *GetClient();
+    bool CheckEvent(unsigned int event);
+};
 
+class MultiplexEpoll {
+private:
+    int epoll_fd;
+public:
+    MultiplexEpoll();
+    ~MultiplexEpoll();
+    int Add(TCPClient &client, unsigned int events);
+    int Modify(TCPClient &client, unsigned int events);
+    int Delete(TCPClient &client);
+    int Wait(MultiplexEpollEvent *events, int size);
+    int WaitUntil(MultiplexEpollEvent *events, int size, int seconds);
 };
 
 

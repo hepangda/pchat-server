@@ -1,5 +1,7 @@
-#pragma once
 #include<string>
+#include<queue>
+#include<vector>
+#include<mutex>
 
 const uint16_t PT_LOGIN_REQ = 100;
 const uint16_t PT_LOGIN_RES = 101;
@@ -44,5 +46,5 @@ struct pkg_t {
 #define EXTERN_PKG_QM extern std::queue<pkg_t> qpkgRecv; \
                       extern std::queue<pkg_t> qpkgSend; \
                       extern std::mutex pkglk_recv; \
-                      extern std::mutex pkglk_send;
-
+                      extern std::mutex pkglk_send; \
+                      extern std::vector<std::string> OnlineList;

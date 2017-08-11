@@ -4,13 +4,14 @@
 #include<queue>
 #include<mutex>
 #include<map>
+#include<thread>
 #include<functional>
 
 using namespace std;
 
 EXTERN_PKG_QM;
 EXTERN_WATCHDOGS;
-map<uint16_t, function<int(pkg_t)> > mPkgfunc;
+static map<uint16_t, function<int(pkg_t)> > mPkgfunc;
 
 void dpkg_init() {
     mPkgfunc[PT_LOGIN_REQ] = dpkg_login_request;
@@ -31,6 +32,12 @@ void dpkg_init() {
     // mPkgfunc[PT_MUTE_REQ] = ;
     // mPkgfunc[PT_SCMGR_REQ] = ;
     // mPkgfunc[PT_EXGRP_REQ] = ;
+
+    thread dpkg_threads[3];
+    for (int i = 0; i < 3; i++) {
+        dpkg_threads[i] = thread(dpkg_distribute);
+        dpkg_threads[i].detach();
+    }
 }
 
 void dpkg_distribute() {
