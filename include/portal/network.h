@@ -38,6 +38,7 @@ protected:
     const int CONN_UDP = SOCK_DGRAM;
 public:
     virtual int Connect() = 0;
+    int getfd(){return socket_fd;}
 };   
 
 class TCPClient {
@@ -46,9 +47,11 @@ private:
 public:
     friend class TCPSocket;
     friend class MultiplexEpoll;
+    int getfd() {return client_socket;}
     int Read(char *dest, int bytes);
     int Read(std::string &dest, int bytes);
     int Write(char *dest, int bytes);
+    int Write(std::string st);
     int Close();
 }; 
 
@@ -63,6 +66,7 @@ public:
     int Listen();
     TCPClient Accept();
     int Write(char *dest, int bytes);
+    int Write(std::string st);
     int Read(char *dest, int bytes);
     int Read(std::string &dest, int bytes);
 

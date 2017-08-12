@@ -6,16 +6,24 @@
 #include<map>
 #include<thread>
 #include<functional>
+#include<condition_variable>
 #include<portal/network.h>
 using namespace std;
 
 EXTERN_PKG_QM;
 EXTERN_WATCHDOGS;
+
 static map<uint16_t, function<int(pkg_t)> > mPkgfunc;
 extern map<string, libportal::TCPClient> UserMap;
 extern map<pkg_t, libportal::TCPClient> UserMap_T;
+extern condition_variable pcv_sendchanged;
+
+mutex pmtx_recvchanged;
+condition_variable pcv_recvchanged;
+
 
 void dpkg_init() {
+    cout << "[Module DPKG] Loaded!" << endl;
     //登录相关请求
     mPkgfunc[PT_LOGIN_REQ] = dpkg_login_request;
     mPkgfunc[PT_REG_REQ] = dpkg_register_request;
@@ -49,17 +57,26 @@ void dpkg_init() {
     thread dpkg_threads[3];
     for (int i = 0; i < 3; i++) {
         dpkg_threads[i] = thread(dpkg_distribute);
-        dpkg_threads[i].detach();
+    }
+
+    for (int i = 0; i < 3; i++) {
+        dpkg_threads[i].join();
     }
 }
 
 void dpkg_distribute() {
     while (WATCHDOG_DPKG) {
+        unique_lock<mutex> pul_recvchanged(pmtx_recvchanged);
+        pcv_recvchanged.wait(pul_recvchanged);
         pkglk_recv.lock();
+        if (qpkgRecv.empty()) {
+            pkglk_recv.unlock();
+            continue;
+        }
         pkg_t thispkg = qpkgRecv.front();
         qpkgRecv.pop();
         pkglk_recv.unlock();
-
+        cout << "dpkg a pack=#" << thispkg.jsdata << "#" << endl;
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
 }
@@ -69,12 +86,11 @@ int dpkg_login_request(pkg_t pkg) {
     Json::Value req, res;
     Json::Reader reader;
     Json::FastWriter writer;
-
     reader.parse(pkg.jsdata, req);
     int ret = srv_checkpwd(req);
     res["un"] = req["un"].asString();
     res["res"] = ret;
-    if (ret == 1) {
+    if (ret == 0) {
         UserMap[res["un"].asString()] = UserMap_T[pkg];
     } else {
         UserMap_T.erase(pkg);
@@ -86,6 +102,7 @@ int dpkg_login_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -107,6 +124,7 @@ int dpkg_register_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -128,6 +146,7 @@ int dpkg_resetpwd_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;  
 }
@@ -155,6 +174,7 @@ int dpkg_addfriend_application(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -162,6 +182,7 @@ int dpkg_addfriend_application(pkg_t pkg) {
 int dpkg_addfriend_request(pkg_t pkg) {
     pkglk_send.lock();
     qpkgSend.push(pkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -184,6 +205,7 @@ int dpkg_delfriend_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -214,6 +236,7 @@ int dpkg_refreshfl_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;    
 }
@@ -244,6 +267,7 @@ int dpkg_refreshgl_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -266,6 +290,7 @@ int dpkg_mute_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -288,6 +313,7 @@ int dpkg_dismute_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -312,6 +338,7 @@ int dpkg_refreshgm_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;    
 }
@@ -334,6 +361,7 @@ int dpkg_creategroup_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -362,6 +390,7 @@ int dpkg_dismissgroup_request(pkg_t pkg) {
 
         pkglk_send.lock();
         qpkgSend.push(recvpkg);
+        pcv_sendchanged.notify_one();
         pkglk_send.unlock();
     }
     return 0;
@@ -390,6 +419,7 @@ int dpkg_exitgroup_request(pkg_t pkg) {
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
     qpkgSend.push(pcpkg);
+    pcv_sendchanged.notify_all();
     pkglk_send.unlock();
     return 0;
 }
@@ -412,6 +442,7 @@ int dpkg_entergroup_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }
@@ -440,6 +471,7 @@ int dpkg_scmgr_request(pkg_t pkg) {
 
     pkglk_send.lock();
     qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
     pkglk_send.unlock();
     return 0;
 }

@@ -1,33 +1,22 @@
 #include<service.h>
+#include<spkg.h>
+#include<rvpkg.h>
 #include<dpkg.h>
+#include<watchdog.h>
+#include<unistd.h>
+#include<thread>
 using namespace std;
 
-Json::Value val, v2;
-Json::FastWriter wri;
+EXTERN_WATCHDOGS;
 
 int main() {
 	database_init();
-	string st;
-	pkg_t pkg;
-	val["un"]="pangda3";
-	val["gn"]="nihaoa";
-	srv_addgroup(val);
-	pkg.jsdata = "{\"un\":\"pangda2\", \"gn\":\"nihaoa\"}";
-	dpkg_refreshgm_request(pkg);
-    // val["un"] = "pangda3";
-	// val["afwho"] = "pangda2";
-	// val["dfwho"] = "pangda2";
-	// val["mtwho"] = "pangda2";
- 	// val["gn"] = "nihaoa";
-	// val["qst"] = 3;
-	// val["pwd"] = "pppa";
-	// val["ans"] = "ddd";
+	thread thread_spkg(spkg_init),
+		   thread_dpkg(dpkg_init),
+		   thread_rvpkg(rvpkg_init);
 
- 	// if (srv_delgroup(val) == 0) {
- 	// 	cout << "excited!" << endl;
- 	// } else {
-	// 	cout << "i am angry" << endl;
-	// }
-	// cout << st << endl;
+	thread_spkg.join();
+	thread_dpkg.join();
+	thread_rvpkg.join();
     return 0;
 }
