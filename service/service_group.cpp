@@ -4,7 +4,6 @@ using namespace mysqlpp;
 using namespace std;
 extern mysqlpp::Connection dbconn;
 
-//TODO:add setmgr cancelmgr
 int srv_addgroup(Json::Value msg) {
     Query query = dbconn.query();
     string sql = "insert into groups(gn,gml,gcreater,gmgr) value(\"" + msg["gn"].asString() +
@@ -192,4 +191,14 @@ int srv_canmgr(string gn, string dfwho) {
     sql = "update groups set gmgr=\"" + result + "\" where gn=\"" + gn + "\";";
     query << sql;
     return !query.exec();
+}
+
+std::string srv_getcrtname(std::string gn) {
+    Query query = dbconn.query();
+    string sql = "select gcreater from groups where gn=\"" + gn + "\";";
+    query << sql;
+
+    StoreQueryResult res = query.store();
+
+    return string(res[0]["gcreater"].c_str());
 }

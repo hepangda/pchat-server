@@ -14,6 +14,7 @@ const string SERVER_SELFIP = "127.0.0.1";
 const int SERVER_PORT = 14001;
 
 map<string, TCPClient> UserMap;
+map<pkg_t, TCPClient> UserMap_T;
 
 MultiplexEpoll rv_epoll;
 
@@ -25,13 +26,8 @@ void rvpkg_init() {
     while (WATCHDOG_RVPKG) {
         TCPClient *clt = new TCPClient;
         *clt = sock.Accept();
-
-
+        rv_epoll.Add(*clt, EPOLLIN | EPOLLET);
     }
-}
-
-void rvpkg_bookusr(string jsdata) {
-//TODO:FINISH IT
 }
 
 void rvpkg_distribute() {
@@ -57,7 +53,7 @@ void rvpkg_distribute() {
                 continue;
             }
             if (thispkg.head.wopr == PT_LOGIN_REQ) {
-                rvpkg_bookusr(thispkg.jsdata);
+                UserMap_T[thispkg] = *clt;
             }
             pkglk_recv.lock();
             qpkgRecv.push(thispkg);

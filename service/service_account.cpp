@@ -23,6 +23,23 @@ int srv_register(Json::Value msg) {
     return !query.exec();
 }
 
+int srv_resetpwd(Json::Value msg) {
+    Query query = dbconn.query();
+    char cache[50];
+    sprintf(cache, "%d", msg["qst"].asInt());
+    string sql = "select * from users where un=\"" + msg["un"].asString() +
+                 "\" and qst = \"" + cache + "\" and ans=\"" + msg["ans"].asString() + "\";";
+    
+    query << sql;
+    StoreQueryResult res = query.store();
+    if (res.size() != 1)
+        return 1;
+    sql = "update users set pwd=\"" + msg["pwd"].asString() + "\" where un=\"" +
+          msg["un"].asString() + "\";";
+    query << sql;
+    return !query.exec();
+}
+
 //验证密码是否正确
 //@param msg 收到的包的Json
 //@return 0代表用户名密码匹配，1代表用户名密码不匹配

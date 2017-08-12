@@ -5,13 +5,13 @@ using namespace std;
 
 extern mysqlpp::Connection dbconn;
 
-int srv_cr_group(string gn, string content) {
+int srv_cr_group(string gn, string un, string content) {
     Query query = dbconn.query();
 
     string ct = content;
     json_tosql(ct);
-    string sql = "insert into groupcr(gn,content) value(\"" + gn +
-                    "\",\"" + ct + "\");";
+    string sql = "insert into groupcr(gn,content,un) value(\"" + gn +
+                    "\",\"" + ct + "\",\"" + un + "\");";
 
     query << sql;
     return !query.exec();

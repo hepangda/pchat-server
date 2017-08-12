@@ -32,6 +32,18 @@ const uint16_t PT_SCMGR_REQ = 125;
 const uint16_t PT_MGRC_NOT = 126;
 const uint16_t PT_EXGRP_REQ = 127;
 const uint16_t PT_EXGRP_NOT = 128;
+const uint16_t PT_CRGRP_REQ = 129;
+const uint16_t PT_ENGRP_REQ = 130;
+const uint16_t PT_ENGRP_APP = 131;
+const uint16_t PT_ENGRP_RES = 132;
+const uint16_t PT_DISGRP_REQ = 133;
+const uint16_t PT_DISGRP_NOT = 134;
+const uint16_t PT_DISMUTE_REQ = 135;
+const uint16_t PT_DISMUTE_RES = 136;
+const uint16_t PT_FETCHCR_REQ = 137;
+const uint16_t PT_FETCHCR_RES = 138;
+const uint16_t PT_CRGRP_RES = 139;
+const uint16_t PT_EXGRP_PCNOT = 140;
 
 struct pkg_head_t {
     uint16_t datasize;
@@ -41,6 +53,9 @@ struct pkg_head_t {
 struct pkg_t {
     pkg_head_t head;
     std::string jsdata;
+    friend bool operator < (const pkg_t a, const pkg_t b) {
+        return a.head.wopr < b.head.wopr;
+    }
 };
 
 #define EXTERN_PKG_QM extern std::queue<pkg_t> qpkgRecv; \
