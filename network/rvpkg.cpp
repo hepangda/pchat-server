@@ -23,10 +23,10 @@ MultiplexEpoll rv_epoll;
 
 void rvpkg_init() {
     cout << "[Module RVPKG] Loaded!" << endl;
-    thread thread_epl(rvpkg_distribute);
-    thread_epl.detach();
-    thread thread_listen(rvpkg_listen);
-    thread_listen.detach();
+    thread thread_epl(rvpkg_distribute),
+           thread_listen(rvpkg_listen);
+    thread_epl.join();
+    thread_listen.join();
 }
 
 void rvpkg_listen() {
@@ -65,7 +65,8 @@ void rvpkg_distribute() {
                 delete clt;
                 continue;
             }
-            if (thispkg.head.wopr == PT_LOGIN_REQ) {
+            if (thispkg.head.wopr == PT_LOGIN_REQ || thispkg.head.wopr == PT_REG_REQ ||
+                thispkg.head.wopr == PT_RESETPWD_REQ) {
                 UserMap_T[thispkg] = *clt;
             }
             cout << "Recv A pack =#" << thispkg.jsdata << "#" << endl;

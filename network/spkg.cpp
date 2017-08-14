@@ -14,6 +14,7 @@ using namespace libportal;
 
 EXTERN_PKG_QM;
 EXTERN_WATCHDOGS;
+extern map<pkg_t, libportal::TCPClient> UserMap_T;
 extern map<string, TCPClient> UserMap;
 static map<uint16_t, function<int(pkg_t)> > mPkgfunc;
 
@@ -24,9 +25,9 @@ mutex lock_spkg;
 
 void spkg_init() {
     cout << "[Module SPKG] Loaded!" << endl;
-    mPkgfunc[PT_LOGIN_RES] = spkg_to_singleuser;
-    mPkgfunc[PT_REG_RES] = spkg_to_singleuser;
-    mPkgfunc[PT_RESETPWD_RES] = spkg_to_singleuser;
+
+    mPkgfunc[PT_REG_RES] = spkg_special_notlogon;
+    mPkgfunc[PT_RESETPWD_RES] = spkg_special_notlogon;
     mPkgfunc[PT_FL] = spkg_to_singleuser;
     mPkgfunc[PT_GL] = spkg_to_singleuser;
     mPkgfunc[PT_GM] = spkg_to_singleuser;
@@ -48,6 +49,7 @@ void spkg_init() {
     mPkgfunc[PT_ADDFRI_REQ] = spkg_to_afwho;
     mPkgfunc[PT_MSG_FRI] = spkg_to_eachother;//TODO:
     mPkgfunc[PT_ADDFRI_RES] = spkg_special_addfri;
+    mPkgfunc[PT_LOGIN_RES] = spkg_special_login;
     // mPkgfunc[PT_ONLINE] = ; //TODO:
     // mPkgfunc[PT_OFFLINE] = ;//TODO:
 
@@ -72,11 +74,42 @@ void spkg_distribute() {
     }
 }
 
+int spkg_special_login(pkg_t pkg) {
+    Json::Value root;
+    Json::Reader reader;
+    reader.parse(pkg.jsdata, root);
+    TCPClient clt = UserMap[root["un"].asString()];
+
+    if (root["res"].asInt() == 1) {
+        clt = TCPClient(root["fd"].asInt());
+    }
+
+    cout << clt.getfd() << endl;
+    lock_spkg.lock();
+    clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
+    clt.Write(pkg.jsdata);
+    lock_spkg.unlock();
+    return 0;
+}
+
+int spkg_special_notlogon(pkg_t pkg) {
+    Json::Value root;
+    Json::Reader reader;
+    reader.parse(pkg.jsdata, root);
+    TCPClient clt = TCPClient(root["fd"].asInt());
+
+    cout << clt.getfd() << endl;
+    lock_spkg.lock();
+    clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
+    clt.Write(pkg.jsdata);
+    lock_spkg.unlock();
+    return 0;
+}
+
 int spkg_to_singleuser(pkg_t pkg) {
     Json::Value root;
     Json::Reader reader;
     reader.parse(pkg.jsdata, root);
-    cout << "here" << endl;
     TCPClient clt = UserMap[root["un"].asString()];
     cout << clt.getfd() << endl;
     lock_spkg.lock();

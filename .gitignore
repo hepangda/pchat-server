@@ -37,6 +37,8 @@ pchat-server
 
 # Test Files
 *test*
+tags.*
+
 
 # VSCode Config
 *.json

@@ -90,11 +90,14 @@ int dpkg_login_request(pkg_t pkg) {
     int ret = srv_checkpwd(req);
     res["un"] = req["un"].asString();
     res["res"] = ret;
+    
     if (ret == 0) {
         UserMap[res["un"].asString()] = UserMap_T[pkg];
     } else {
-        UserMap_T.erase(pkg);
+        res["fd"] = UserMap_T[pkg].getfd();
     }
+
+    UserMap_T.erase(pkg);
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
     recvpkg.head.wopr = PT_LOGIN_RES;
@@ -116,7 +119,9 @@ int dpkg_register_request(pkg_t pkg) {
     int ret = srv_register(req);
     res["un"] = req["un"].asString();
     res["res"] = ret;
+    res["fd"] = UserMap_T[pkg].getfd();
 
+    UserMap_T.erase(pkg);
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
     recvpkg.head.wopr = PT_REG_RES;
@@ -138,7 +143,9 @@ int dpkg_resetpwd_request(pkg_t pkg) {
     int ret = srv_resetpwd(req);
     res["un"] = req["un"].asString();
     res["res"] = ret;
+    res["fd"] = UserMap_T[pkg].getfd();
 
+    UserMap_T.erase(pkg);
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
     recvpkg.head.wopr = PT_RESETPWD_RES;

@@ -38,7 +38,7 @@ protected:
     const int CONN_UDP = SOCK_DGRAM;
 public:
     virtual int Connect() = 0;
-    int getfd(){return socket_fd;}
+    int getfd() { return socket_fd; }
 };   
 
 class TCPClient {
@@ -47,7 +47,9 @@ private:
 public:
     friend class TCPSocket;
     friend class MultiplexEpoll;
-    int getfd() {return client_socket;}
+    TCPClient() {}
+    TCPClient(int fd) : client_socket(fd) {}
+    int getfd() { return client_socket; }
     int Read(char *dest, int bytes);
     int Read(std::string &dest, int bytes);
     int Write(char *dest, int bytes);
@@ -60,6 +62,7 @@ class TCPSocket: public Socket {
 private:
 
 public:
+    friend class MultiplexEpoll;
     TCPSocket(std::string address, unsigned int port);
     ~TCPSocket();
     int Connect();
@@ -78,6 +81,7 @@ private:
 public:
     friend class MultiplexEpoll;
     TCPClient *GetClient();
+    TCPSocket *GetSocket();
     bool CheckEvent(unsigned int event);
 };
 
@@ -88,8 +92,11 @@ public:
     MultiplexEpoll();
     ~MultiplexEpoll();
     int Add(TCPClient &client, unsigned int events);
+    int Add(TCPSocket &sock, unsigned int events);
     int Modify(TCPClient &client, unsigned int events);
+    int Modify(TCPSocket &sock, unsigned int events);
     int Delete(TCPClient &client);
+    int Delete(TCPSocket &sock);
     int Wait(MultiplexEpollEvent *events, int size);
     int WaitUntil(MultiplexEpollEvent *events, int size, int seconds);
 };

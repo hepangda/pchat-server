@@ -28,8 +28,8 @@ int srv_resetpwd(Json::Value msg) {
     char cache[50];
     sprintf(cache, "%d", msg["qst"].asInt());
     string sql = "select * from users where un=\"" + msg["un"].asString() +
-                 "\" and qst = \"" + cache + "\" and ans=\"" + msg["ans"].asString() + "\";";
-    
+                 "\" and qst =" + cache + " and ans=\"" + msg["ans"].asString() + "\";";
+    cout << sql << endl;
     query << sql;
     StoreQueryResult res = query.store();
     if (res.size() != 1)
