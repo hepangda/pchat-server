@@ -8,6 +8,7 @@
 #include<functional>
 #include<condition_variable>
 #include<portal/network.h>
+#include<algorithm>
 using namespace std;
 
 EXTERN_PKG_QM;
@@ -17,7 +18,7 @@ static map<uint16_t, function<int(pkg_t)> > mPkgfunc;
 extern map<string, libportal::TCPClient> UserMap;
 extern map<pkg_t, libportal::TCPClient> UserMap_T;
 extern condition_variable pcv_sendchanged;
-
+extern vector<string> OnlineList;
 mutex pmtx_recvchanged;
 condition_variable pcv_recvchanged;
 
@@ -93,8 +94,13 @@ int dpkg_login_request(pkg_t pkg) {
     res["un"] = req["un"].asString();
     res["res"] = ret;
     
+    auto i = find(OnlineList.begin(), OnlineList.end(), res["un"].asString());
+    if (i != OnlineList.end())
+        res["res"] = ret = 1;
+
     if (ret == 0) {
         UserMap[res["un"].asString()] = UserMap_T[pkg];
+        OnlineList.push_back(res["un"].asString());
     } else {
         res["fd"] = UserMap_T[pkg].getfd();
     }
@@ -240,7 +246,7 @@ int dpkg_refreshfl_request(pkg_t pkg) {
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
-    recvpkg.head.wopr = PT_REFRESH_FL;
+    recvpkg.head.wopr = PT_FL;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
     pkglk_send.lock();
@@ -271,7 +277,7 @@ int dpkg_refreshgl_request(pkg_t pkg) {
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
-    recvpkg.head.wopr = PT_REFRESH_GL;
+    recvpkg.head.wopr = PT_GL;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
     pkglk_send.lock();
@@ -342,7 +348,7 @@ int dpkg_refreshgm_request(pkg_t pkg) {
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
-    recvpkg.head.wopr = PT_REFRESH_GM;
+    recvpkg.head.wopr = PT_GM;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
     pkglk_send.lock();

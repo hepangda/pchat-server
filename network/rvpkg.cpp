@@ -7,6 +7,7 @@
 #include<rvpkg.h>
 #include<iostream>
 #include<condition_variable>
+#include<algorithm>
 using namespace std;
 using namespace libportal;
 
@@ -18,7 +19,7 @@ const int SERVER_PORT = 50000;
 map<string, TCPClient> UserMap;
 map<pkg_t, TCPClient> UserMap_T;
 extern condition_variable pcv_recvchanged;
-
+extern vector<string> OnlineList;
 MultiplexEpoll rv_epoll;
 
 void rvpkg_init() {
@@ -55,7 +56,15 @@ void rvpkg_distribute() {
             if (ret == 0) {
                 rv_epoll.Delete(*clt);
                 cout << "\n!!! [Module RVPKG] CLOSE:" << endl
-                     << "A Connetion Closed." << endl;   
+                     << "A Connetion Closed." << endl;
+                string b;
+                for (auto i : UserMap) {
+                    if (i.second.getfd() == clt->getfd()) {
+                        b = i.first;
+                    }
+                }
+                auto i = find(OnlineList.begin(), OnlineList.end(), b);
+                OnlineList.erase(i);
                 clt->Close();
                 delete clt;
                 continue;
@@ -64,7 +73,15 @@ void rvpkg_distribute() {
             if (ret == 0) {
                 rv_epoll.Delete(*clt);
                 cout << "\n!!! [Module RVPKG] CLOSE:" << endl
-                     << "A Connetion Closed." << endl;                
+                     << "A Connetion Closed." << endl;
+                string b;
+                for (auto i : UserMap) {
+                    if (i.second.getfd() == clt->getfd()) {
+                        b = i.first;
+                    }
+                }
+                auto i = find(OnlineList.begin(), OnlineList.end(), b);
+                OnlineList.erase(i);      
                 clt->Close();
                 delete clt;
                 continue;
