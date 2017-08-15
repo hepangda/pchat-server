@@ -24,7 +24,7 @@ condition_variable pcv_sendchanged;
 mutex lock_spkg;
 
 void spkg_init() {
-    cout << "[Module SPKG] Loaded!" << endl;
+    cout << "\n[Module SPKG] Loaded!\n";
 
     mPkgfunc[PT_REG_RES] = spkg_special_notlogon;
     mPkgfunc[PT_RESETPWD_RES] = spkg_special_notlogon;
@@ -69,7 +69,9 @@ void spkg_distribute() {
         pkg_t thispkg = qpkgSend.front();
         qpkgSend.pop();
         pkglk_send.unlock();
-        cout << "spkg a pack=#" << thispkg.jsdata << "#" << endl;
+        cout << "<<< [Module SPKG] SEND:" << endl
+             << "Operator:" << thispkg.head.wopr << endl
+             << "Data:" << thispkg.jsdata << endl;
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
 }
@@ -84,7 +86,6 @@ int spkg_special_login(pkg_t pkg) {
         clt = TCPClient(root["fd"].asInt());
     }
 
-    cout << clt.getfd() << endl;
     lock_spkg.lock();
     clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
     clt.Write(pkg.jsdata);
@@ -98,7 +99,6 @@ int spkg_special_notlogon(pkg_t pkg) {
     reader.parse(pkg.jsdata, root);
     TCPClient clt = TCPClient(root["fd"].asInt());
 
-    cout << clt.getfd() << endl;
     lock_spkg.lock();
     clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
     clt.Write(pkg.jsdata);
@@ -111,7 +111,7 @@ int spkg_to_singleuser(pkg_t pkg) {
     Json::Reader reader;
     reader.parse(pkg.jsdata, root);
     TCPClient clt = UserMap[root["un"].asString()];
-    cout << clt.getfd() << endl;
+
     lock_spkg.lock();
     clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
     clt.Write(pkg.jsdata);

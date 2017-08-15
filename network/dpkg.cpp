@@ -23,7 +23,7 @@ condition_variable pcv_recvchanged;
 
 
 void dpkg_init() {
-    cout << "[Module DPKG] Loaded!" << endl;
+    cout << "\n[Module DPKG] Loaded!\n";
     //登录相关请求
     mPkgfunc[PT_LOGIN_REQ] = dpkg_login_request;
     mPkgfunc[PT_REG_REQ] = dpkg_register_request;
@@ -76,7 +76,9 @@ void dpkg_distribute() {
         pkg_t thispkg = qpkgRecv.front();
         qpkgRecv.pop();
         pkglk_recv.unlock();
-        cout << "dpkg a pack=#" << thispkg.jsdata << "#" << endl;
+        cout << "\n&&& [Module DPKG] DEAL:" << endl
+             << "Operator:" << thispkg.head.wopr << endl
+             << "Data:" << thispkg.jsdata << endl;
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
 }
@@ -387,9 +389,13 @@ int dpkg_dismissgroup_request(pkg_t pkg) {
         return 1;
 
     vector<string> gms;
+    Json::Value t;
+    t["gn"] = res["gn"].asString();
     for (auto i = 0u; i < gml["gml"].size(); i++) {
         res["un"] = gml["gml"][i].asString();
 
+        t["un"] = res["un"].asString();
+        srv_delfromgroup(t);
         pkg_t recvpkg;
         recvpkg.jsdata = writer.write(res);
         recvpkg.head.wopr = PT_DISGRP_NOT;
