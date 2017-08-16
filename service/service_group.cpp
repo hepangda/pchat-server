@@ -10,6 +10,32 @@ int srv_addgroup(Json::Value msg) {
                  "\",\"{\\\"gml\\\":[\\\"" + msg["un"].asString() + "\\\"]}\",\"" +
                  msg["un"].asString() + "\",\"{\\\"gmgr\\\":[]}\")";
     query << sql;
+
+    if (!query.exec())
+        return 11;
+
+    //mQuery q2 = dbconn.query();
+    sql = "select gl from users where un=\"" + msg["un"].asString() + "\";";
+    query << sql;
+    StoreQueryResult res = query.store();
+
+    if (res.size() == 0) {
+        cerr << "\033[33m" << query.error() << "\033[0m" << endl;
+        return 2;
+    }
+
+    Json::Value gl;
+    j_reader.parse(res[0]["gl"].c_str(), gl);
+    if (json_append(gl, "gl", msg["gn"].asString()) == -1) {
+        return 3;
+    }
+    string result = j_writer.write(gl);
+    json_tosql(result);
+
+    sql = "update users set gl=\"" + result + "\" where un=\"" + 
+          msg["un"].asString() + "\";";
+
+    query << sql;
     return !query.exec();
 }
 
@@ -53,13 +79,15 @@ int srv_addtogroup(Json::Value msg) {
     Query query = dbconn.query();
     string sql = "select gl from users where un=\"" + msg["un"].asString() + "\";";
     query << sql;
-
     StoreQueryResult res = query.store();
+
+    if (res.size() == 0)
+        return 2;
 
     Json::Value gl;
     j_reader.parse(res[0]["gl"].c_str(), gl);
     if (json_append(gl, "gl", msg["gn"].asString()) == -1) {
-        return 1;
+        return 3;
     }
     string result = j_writer.write(gl);
     json_tosql(result);
@@ -69,18 +97,20 @@ int srv_addtogroup(Json::Value msg) {
 
     query << sql;
     if(!query.exec()) {
-        return 1;
+        return 4;
     }
 
     sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
     query << sql;
-
     res = query.store();
+    
+    if (res.size() == 0)
+        return 6;
 
     Json::Value gml;
     j_reader.parse(res[0]["gml"].c_str(), gml);
     if (json_append(gml, "gml", msg["un"].asString()) == -1) {
-        return 1;
+        return 7;
     }
     result = j_writer.write(gml);
     json_tosql(result);
@@ -98,6 +128,10 @@ int srv_delfromgroup(Json::Value msg) {
     query << sql;
 
     StoreQueryResult res = query.store();
+
+    if (res.size() == 0) {
+        return 1;
+    }
 
     Json::Value gl;
     j_reader.parse(res[0]["gl"].c_str(), gl);
@@ -118,9 +152,11 @@ int srv_delfromgroup(Json::Value msg) {
 
     sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
     query << sql;
-
     res = query.store();
-
+    
+    if (res.size() == 0)
+        return 1;
+        
     Json::Value gml;
     j_reader.parse(res[0]["gml"].c_str(), gml);
     idx = json_findarray(gml, "gml", msg["un"].asString());
@@ -140,12 +176,15 @@ int srv_delfromgroup(Json::Value msg) {
 
 int srv_getgm(Json::Value msg, string &store) {
     Query query = dbconn.query();
-    string sql = "select gml from groups where gn=\"" + msg["gn"].asString() + "\";";
+    string sql = "select * from groups where gn=\"" + msg["gn"].asString() + "\";";
     query << sql;
 
     StoreQueryResult res = query.store();
-    if (res.size() == 0)
+    if (res.size() == 0) {
+        cerr << "\033[33m#" << query.error() << "#\033[0m" << endl;
+        cerr << "\033[33m#" << sql << "#\033[0m" << endl;
         return 1;
+    }
     store = res[0]["gml"].c_str();
     return 0;
 }

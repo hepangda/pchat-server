@@ -32,6 +32,7 @@ create table privatecr (
 
 create table groupcr (
     id serial NOT NULL,
+    un varchar(50) NOT NULL,
     gn varchar(50) NOT NULL,
     tm timestamp NOT NULL,
     content text,

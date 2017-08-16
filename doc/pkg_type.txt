@@ -43,7 +43,7 @@
 |  136 | Dismute Result              | {"un":"__","mtwho":"__","res":<0S1F>}           |
 |  137 | Fetch Record Request        | {"un":"__","typ":<0F1G>,"gn":"__","fun":"__"}   |
 |  138 | Record Result               | {"un":"__","rc":[{"from":"__","to":"__",        |
-|      |                             |  "content":"RSA"}, ...], "res":<0F1G>}          |
+|      |                             |  "content":"RSA"}, ...], "typ":<0F1G>}          |
 |  139 | Create Group Result         | {"un":"__","gn":"__","res":<0S1F>}              |
 |  140 | Exit Group Notice(Person)   | {"un":"__","gn":"__"}                           |
 ----------------------------------------------------------------------------------------

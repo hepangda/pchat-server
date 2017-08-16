@@ -40,6 +40,8 @@ void spkg_init() {
     mPkgfunc[PT_PKEY_RES] = spkg_to_singleuser;   //TODO:
     mPkgfunc[PT_EXGRP_PCNOT] = spkg_to_singleuser;
     mPkgfunc[PT_DELFRI_RES] = spkg_to_singleuser;
+    mPkgfunc[PT_ENGRP_PCNOT] = spkg_special_pcnot;
+    mPkgfunc[PT_FCH_RES] = spkg_to_singleuser;
 
     mPkgfunc[PT_EXGRP_NOT] = spkg_to_group;
     mPkgfunc[PT_MSG_GRP] = spkg_to_group;
@@ -74,6 +76,22 @@ void spkg_distribute() {
              << "Data:" << thispkg.jsdata << endl;
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
+}
+
+int spkg_special_pcnot(pkg_t pkg) {
+    Json::Value root;
+    Json::Reader reader;
+    reader.parse(pkg.jsdata, root);
+    if (root["res"].asInt() == 0)
+        return 0;
+
+    TCPClient clt = UserMap[root["un"].asString()];
+
+    lock_spkg.lock();
+    clt.Write((char *)&pkg.head, sizeof(pkg_head_t));
+    clt.Write(pkg.jsdata);
+    lock_spkg.unlock();
+    return 0;
 }
 
 int spkg_special_login(pkg_t pkg) {

@@ -34,5 +34,9 @@ std::string srv_getcrtname(std::string gn);
 //service_record
 int srv_delcr_private(std::string un1, std::string un2);
 int srv_delcr_group(std::string gn);
-int srv_cr_private(std::string from, std::string to, std::string content);
+int srv_cr_private(std::string from, std::string to, std::string content, int st = 1);
 int srv_cr_group(std::string gn, std::string un, std::string content);
+int srv_fetch_grpcr(std::string gn, std::string &store);
+int srv_fetch_privatecr(std::string un1, std::string un2, std::string &store);
+
+int srv_fch(std::string un, std::string &store);

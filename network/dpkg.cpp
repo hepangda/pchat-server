@@ -38,7 +38,7 @@ void dpkg_init() {
     mPkgfunc[PT_REFRESH_GL] = dpkg_refreshgl_request;
     mPkgfunc[PT_MUTE_REQ] = dpkg_mute_request;
     mPkgfunc[PT_DISMUTE_REQ] = dpkg_dismute_request;
-    // mPkgfunc[PT_MSG_FRI] = ;
+    mPkgfunc[PT_MSG_FRI] = dpkg_msg_friend;
 
     //群相关请求
     mPkgfunc[PT_REFRESH_GM] = dpkg_refreshgm_request;
@@ -47,13 +47,13 @@ void dpkg_init() {
     mPkgfunc[PT_EXGRP_REQ] = dpkg_exitgroup_request;
     mPkgfunc[PT_ENGRP_REQ] = dpkg_entergroup_request;
     mPkgfunc[PT_SCMGR_REQ] = dpkg_scmgr_request;
-    // mPkgfunc[PT_MSG_GRP] = ;
-
+    mPkgfunc[PT_MSG_GRP] = dpkg_msg_grp;
+    mPkgfunc[PT_FCH_REQ] = dpkg_fch;
     // mPkgfunc[PT_ONLINE] = ;
     // mPkgfunc[PT_OFFLINE] = ;
     // mPkgfunc[PT_PKEY_REQ] = ;
     // mPkgfunc[PT_PKEY_RES] = ;
-    // mPkgfunc[PT_FETCHCR_REQ] = ;
+    mPkgfunc[PT_FETCHCR_REQ] = dpkg_fetchcr;
 
     thread dpkg_threads[3];
     for (int i = 0; i < 3; i++) {
@@ -82,6 +82,35 @@ void dpkg_distribute() {
              << "Data:" << thispkg.jsdata << endl;
         mPkgfunc[thispkg.head.wopr](thispkg);
     }
+}
+
+//聊天相关请求
+int dpkg_msg_grp(pkg_t pkg) {
+    Json::Value root;
+    Json::Reader reader;
+    reader.parse(pkg.jsdata, root);
+    srv_cr_group(root["gn"].asString(), root["sd"].asString(), root["msg"].asString());
+    pkglk_send.lock();
+    qpkgSend.push(pkg);
+    pcv_sendchanged.notify_all();
+    pkglk_send.unlock();
+    return 0;
+}
+
+int dpkg_msg_friend(pkg_t pkg) {
+    Json::Value root;
+    Json::Reader reader;
+    reader.parse(pkg.jsdata, root);
+    if (find(OnlineList.begin(), OnlineList.end(), root["rv"].asString()) == OnlineList.end())
+        srv_cr_private(root["sd"].asString(), root["rv"].asString(), root["msg"].asString(),0);
+    else
+        srv_cr_private(root["sd"].asString(), root["rv"].asString(), root["msg"].asString());
+
+    pkglk_send.lock();
+    qpkgSend.push(pkg);
+    pcv_sendchanged.notify_all();
+    pkglk_send.unlock();
+    return 0;
 }
 
 //账户相关请求
@@ -263,7 +292,7 @@ int dpkg_refreshgl_request(pkg_t pkg) {
 
     reader.parse(pkg.jsdata, req);
     string fl;
-    int ret = srv_getfl(req, fl);
+    int ret = srv_getgl(req, fl);
     res["un"] = req["un"].asString();
     res["res"] = ret;
 
@@ -295,7 +324,7 @@ int dpkg_mute_request(pkg_t pkg) {
     reader.parse(pkg.jsdata, req);
     int ret = srv_mute_enable(req);
     res["un"] = req["un"].asString();
-    res["dfwho"] = req["mtwho"].asString();
+    res["mtwho"] = req["mtwho"].asString();
     res["res"] = ret;
 
     pkg_t recvpkg;
@@ -318,7 +347,7 @@ int dpkg_dismute_request(pkg_t pkg) {
     reader.parse(pkg.jsdata, req);
     int ret = srv_mute_disable(req);
     res["un"] = req["un"].asString();
-    res["dfwho"] = req["mtwho"].asString();
+    res["mtwho"] = req["mtwho"].asString();
     res["res"] = ret;
 
     pkg_t recvpkg;
@@ -345,6 +374,7 @@ int dpkg_refreshgm_request(pkg_t pkg) {
     reader.parse(gml, res);
     res["un"] = req["un"].asString();
     res["res"] = ret;
+    res["gn"] = req["gn"].asString();
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
@@ -365,6 +395,7 @@ int dpkg_creategroup_request(pkg_t pkg) {
 
     reader.parse(pkg.jsdata, req);
     int ret = srv_addgroup(req);
+
     res["un"] = req["un"].asString();
     res["gn"] = req["gn"].asString();
     res["res"] = ret;
@@ -421,7 +452,7 @@ int dpkg_exitgroup_request(pkg_t pkg) {
     Json::FastWriter writer;
 
     reader.parse(pkg.jsdata, req);
-    int ret = srv_delfromgroup(req);
+    srv_delfromgroup(req);
     res["egwho"] = req["egwho"].asString();
     res["gn"] = req["gn"].asString();
     r2["un"] = req["egwho"].asString();
@@ -456,7 +487,10 @@ int dpkg_entergroup_request(pkg_t pkg) {
 
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
-    recvpkg.head.wopr = PT_ENGRP_RES;
+    if (ret != 0)
+        recvpkg.head.wopr = PT_ENGRP_PCNOT;
+    else 
+        recvpkg.head.wopr = PT_ENGRP_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
     pkglk_send.lock();
@@ -486,6 +520,61 @@ int dpkg_scmgr_request(pkg_t pkg) {
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);
     recvpkg.head.wopr = PT_MGRC_NOT;
+    recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
+
+    pkglk_send.lock();
+    qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
+    pkglk_send.unlock();
+    return 0;
+}
+
+int dpkg_fetchcr(pkg_t pkg) {
+    Json::Value req, res;
+    Json::Reader reader;
+    Json::FastWriter writer;
+
+    reader.parse(pkg.jsdata, req);
+    string store;
+    if (req["typ"].asInt() == 0) {
+        srv_fetch_privatecr(req["fun"].asString(), req["un"].asString(), store);
+    } else {
+        srv_fetch_grpcr(req["gn"].asString(), store);
+    }
+
+    res["un"] = req["un"].asString();
+    res["typ"] = req["typ"].asInt();
+    res["rc"] = store;
+
+
+    pkg_t recvpkg;
+    recvpkg.jsdata = writer.write(res);
+    recvpkg.head.wopr = PT_FETCHCR_RES;
+    recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
+
+    pkglk_send.lock();
+    qpkgSend.push(recvpkg);
+    pcv_sendchanged.notify_one();
+    pkglk_send.unlock();
+    return 0;
+}
+
+int dpkg_fch(pkg_t pkg) {
+    Json::Value req, res;
+    Json::Reader reader;
+    Json::FastWriter writer;
+
+    reader.parse(pkg.jsdata, req);
+    string store;
+    srv_fch(req["un"].asString(), store);
+
+    res["un"] = req["un"].asString();
+    res["rc"] = store;
+
+
+    pkg_t recvpkg;
+    recvpkg.jsdata = writer.write(res);
+    recvpkg.head.wopr = PT_FCH_RES;
     recvpkg.head.datasize = sizeof(pkg_head_t) + recvpkg.jsdata.size();
 
     pkglk_send.lock();

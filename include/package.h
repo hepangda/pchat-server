@@ -45,6 +45,9 @@ const uint16_t PT_FETCHCR_REQ = 137;
 const uint16_t PT_FETCHCR_RES = 138;
 const uint16_t PT_CRGRP_RES = 139;
 const uint16_t PT_EXGRP_PCNOT = 140;
+const uint16_t PT_ENGRP_PCNOT = 141;
+const uint16_t PT_FCH_REQ = 142;
+const uint16_t PT_FCH_RES = 143;
 
 struct pkg_head_t {
     uint16_t datasize;

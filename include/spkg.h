@@ -9,3 +9,4 @@ int spkg_to_afwho(pkg_t pkg);
 int spkg_special_addfri(pkg_t pkg);
 int spkg_special_login(pkg_t pkg);
 int spkg_special_notlogon(pkg_t pkg);
+int spkg_special_pcnot(pkg_t pkg);

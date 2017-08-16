@@ -14,7 +14,7 @@ using namespace libportal;
 EXTERN_PKG_QM;
 EXTERN_WATCHDOGS;
 const string SERVER_SELFIP = "127.0.0.1";
-const int SERVER_PORT = 50000;
+const int SERVER_PORT = 6542;
 
 map<string, TCPClient> UserMap;
 map<pkg_t, TCPClient> UserMap_T;
@@ -66,7 +66,7 @@ void rvpkg_distribute() {
                 auto i = find(OnlineList.begin(), OnlineList.end(), b);
                 OnlineList.erase(i);
                 clt->Close();
-                delete clt;
+                //delete clt;
                 continue;
             }
             ret = clt->Read(thispkg.jsdata, thispkg.head.datasize - sizeof(pkg_head_t));
@@ -83,7 +83,7 @@ void rvpkg_distribute() {
                 auto i = find(OnlineList.begin(), OnlineList.end(), b);
                 OnlineList.erase(i);      
                 clt->Close();
-                delete clt;
+                //delete clt;
                 continue;
             }
             if (thispkg.head.wopr == PT_LOGIN_REQ || thispkg.head.wopr == PT_REG_REQ ||

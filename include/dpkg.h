@@ -15,6 +15,7 @@ int dpkg_refreshgl_request(pkg_t pkg);
 int dpkg_addfriend_application(pkg_t pkg);
 int dpkg_mute_request(pkg_t pkg);
 int dpkg_dismute_request(pkg_t pkg);
+int dpkg_msg_friend(pkg_t pkg);
 
 //群相关
 int dpkg_refreshgm_request(pkg_t pkg);
@@ -23,3 +24,7 @@ int dpkg_dismissgroup_request(pkg_t pkg);
 int dpkg_exitgroup_request(pkg_t pkg);
 int dpkg_entergroup_request(pkg_t pkg);
 int dpkg_scmgr_request(pkg_t pkg);
+int dpkg_msg_grp(pkg_t pkg);
+
+int dpkg_fetchcr(pkg_t pkg);
+int dpkg_fch(pkg_t pkg);
