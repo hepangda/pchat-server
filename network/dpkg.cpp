@@ -134,6 +134,7 @@ int dpkg_login_request(pkg_t pkg) {
         res["fd"] = UserMap_T[pkg].getfd();
     }
 
+
     UserMap_T.erase(pkg);
     pkg_t recvpkg;
     recvpkg.jsdata = writer.write(res);

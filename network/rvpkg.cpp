@@ -64,7 +64,8 @@ void rvpkg_distribute() {
                     }
                 }
                 auto i = find(OnlineList.begin(), OnlineList.end(), b);
-                OnlineList.erase(i);
+                if (i != OnlineList.end())
+                    OnlineList.erase(i);
                 clt->Close();
                 //delete clt;
                 continue;
@@ -81,7 +82,8 @@ void rvpkg_distribute() {
                     }
                 }
                 auto i = find(OnlineList.begin(), OnlineList.end(), b);
-                OnlineList.erase(i);      
+                if (i != OnlineList.end())
+                    OnlineList.erase(i);      
                 clt->Close();
                 //delete clt;
                 continue;
