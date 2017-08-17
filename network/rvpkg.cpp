@@ -14,7 +14,7 @@ using namespace libportal;
 EXTERN_PKG_QM;
 EXTERN_WATCHDOGS;
 const string SERVER_SELFIP = "127.0.0.1";
-const int SERVER_PORT = 6542;
+const int SERVER_PORT = 6541;
 
 map<string, TCPClient> UserMap;
 map<pkg_t, TCPClient> UserMap_T;
