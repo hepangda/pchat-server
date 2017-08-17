@@ -5,8 +5,8 @@
 #include<watchdog.h>
 #include<unistd.h>
 #include<thread>
+#include<iostream>
 using namespace std;
-
 EXTERN_WATCHDOGS;
 
 int main() {

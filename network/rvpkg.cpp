@@ -1,26 +1,28 @@
+#include<condition_variable>
 #include<portal/network.h>
 #include<portal/crypt.h>
 #include<json_assist.h>
 #include<watchdog.h>
-#include<map>
-#include<thread>
-#include<rvpkg.h>
-#include<iostream>
-#include<condition_variable>
 #include<algorithm>
+#include<iostream>
+#include<rvpkg.h>
+#include<thread>
+#include<map>
+#define PKGRECV_PUSH(pkg) pkglk_recv.lock(); qpkgRecv.push(pkg); pcv_recvchanged.notify_all(); pkglk_recv.unlock()
+
 using namespace std;
 using namespace libportal;
 
-EXTERN_PKG_QM;
-EXTERN_WATCHDOGS;
-const string SERVER_SELFIP = "127.0.0.1";
 const int SERVER_PORT = 6541;
-
+const string SERVER_SELFIP = "127.0.0.1";
 map<string, TCPClient> UserMap;
 map<pkg_t, TCPClient> UserMap_T;
+MultiplexEpoll rv_epoll;
+
+EXTERN_PKG_QM;
+EXTERN_WATCHDOGS;
 extern condition_variable pcv_recvchanged;
 extern vector<string> OnlineList;
-MultiplexEpoll rv_epoll;
 
 void rvpkg_init() {
     cout << "\n[Module RVPKG] Loaded!\n";
@@ -33,20 +35,19 @@ void rvpkg_init() {
 void rvpkg_listen() {
     TCPSocket sock(SERVER_SELFIP, SERVER_PORT);
     sock.Listen();
-    while (WATCHDOG_RVPKG) {
+    WHILE_WATCHDOG(RVPKG) {
         TCPClient *clt = new TCPClient;
         *clt = sock.Accept();
-        cout << "\n*** [Module RVPKG] ACCEPT:" << endl
-             << "A Connetion Accepted." << endl;   
+
+        cout << "*** \033[31m ACCEPT:\nA Connection Accepted\033[0m\n";
         rv_epoll.Add(*clt, EPOLLIN);
     }
 }
 
 void rvpkg_distribute() {
     MultiplexEpollEvent evts[100];
-    while (WATCHDOG_RVPKG) {
-        cout << "\n~~~ [Module RVPKG] WAIT:" << endl
-            << "Epoll is waiting for connections." << endl;   
+    WHILE_WATCHDOG(RVPKG) {
+        cout << "~~~ \033[31m WAIT:\nEpoll is waiting for connections.\033[0m\n";   
         int limit = rv_epoll.Wait(evts, 100);
         for (int i = 0; i < limit; i++) {
             TCPClient *clt = evts[i].GetClient();
@@ -55,8 +56,7 @@ void rvpkg_distribute() {
             int ret = clt->Read((char *)&thispkg.head, sizeof(pkg_head_t));
             if (ret == 0) {
                 rv_epoll.Delete(*clt);
-                cout << "\n!!! [Module RVPKG] CLOSE:" << endl
-                     << "A Connetion Closed." << endl;
+                cout << "!!! \033[31m CLOSE:\nA Connetion Closed.\033[0m\n" << endl;
                 string b;
                 for (auto i : UserMap) {
                     if (i.second.getfd() == clt->getfd()) {
@@ -73,8 +73,8 @@ void rvpkg_distribute() {
             ret = clt->Read(thispkg.jsdata, thispkg.head.datasize - sizeof(pkg_head_t));
             if (ret == 0) {
                 rv_epoll.Delete(*clt);
-                cout << "\n!!! [Module RVPKG] CLOSE:" << endl
-                     << "A Connetion Closed." << endl;
+                cout << "!!! \033[31m CLOSE:\nA Connetion Closed.\033[0m\n" << endl;
+
                 string b;
                 for (auto i : UserMap) {
                     if (i.second.getfd() == clt->getfd()) {
@@ -92,13 +92,9 @@ void rvpkg_distribute() {
                 thispkg.head.wopr == PT_RESETPWD_REQ) {
                 UserMap_T[thispkg] = *clt;
             }
-            cout << "\n>>> [Module RVPKG] RECV:" << endl
-                 << "Operator:" << thispkg.head.wopr
-                 << "Data:" << thispkg.jsdata << endl;
-            pkglk_recv.lock();
-            qpkgRecv.push(thispkg);
-            pcv_recvchanged.notify_all();
-            pkglk_recv.unlock();
+            cout << ">>> \033[31m RECV:\nOperator:" << thispkg.head.wopr
+                 << "\nData:" << thispkg.jsdata << "\033[0m\n";
+            PKGRECV_PUSH(thispkg);
         }
     }
 }

@@ -80,7 +80,6 @@ int srv_fetch_privatecr(string un1, string un2, string &store) {
     string sql = "select * from privatecr where fromun=\"" + un1 + 
                 "\" and toun=\"" + un2 + "\";";
     query << sql;
-    cout << "\033[33m" << sql << "\033[0m" << endl;
     StoreQueryResult res = query.store();
    
     store = "";
@@ -91,7 +90,6 @@ int srv_fetch_privatecr(string un1, string un2, string &store) {
     sql = "select * from privatecr where fromun=\"" + un2 + 
                 "\" and toun=\"" + un1 + "\";";
     query << sql;
-        cout << "\033[33m" << sql << "\033[0m" << endl;
     res = query.store();
 
     for (auto i = 0u; i < res.size(); i++) {
