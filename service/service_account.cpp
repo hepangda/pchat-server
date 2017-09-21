@@ -15,11 +15,12 @@ int srv_register(Json::Value msg) {
     sprintf(cache, "%d", msg["qst"].asInt());
 
     string sql = "insert into users(un,pwd,qst,ans,fl,gl,mute) value(\"" + 
-                  msg["un"].asString() + "\",\"" + msg["pwd"].asString() +
-                  "\"," + cache + ",\"" + msg["ans"].asString() + 
-                  "\",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
+                 msg["un"].asString() + "\",\"" + msg["pwd"].asString() +
+                 "\"," + cache + ",\"" + msg["ans"].asString() + 
+                 "\",\"{\\\"fl\\\":[]}\",\"{\\\"gl\\\":[]}\",\"{\\\"mute\\\":[]}\");";
 
     query << sql;
+
     return !query.exec();
 }
 

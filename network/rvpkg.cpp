@@ -13,7 +13,7 @@
 using namespace std;
 using namespace libportal;
 
-const int SERVER_PORT = 6541;
+const int SERVER_PORT = 6660;
 const string SERVER_SELFIP = "127.0.0.1";
 map<string, TCPClient> UserMap;
 map<pkg_t, TCPClient> UserMap_T;
