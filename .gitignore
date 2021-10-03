@@ -40,8 +40,13 @@ pchat-server
 tags.*
 
 
-# VSCode Config
-*.json
+# IDE Config
+*.vscode
+*.idea
 
 # Database
 database_connstr.h
+
+
+# Rust target
+target/
