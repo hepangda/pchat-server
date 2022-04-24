@@ -32,9 +32,6 @@
 *.app
 pchat-server
 
-# Shell Scripts
-*.sh
-
 # Test Files
 *test*
 tags.*
@@ -45,7 +42,8 @@ cmake-build-debug
 .idea
 
 # Generated Files
-./source/protocol/*.pb.*
+source/protocol/*.pb.cc
+source/protocol/*.pb.h
 database_connstr.h
 
 # macOS Filesystem
