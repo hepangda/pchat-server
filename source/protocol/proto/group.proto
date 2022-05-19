@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package pcs;
+
+import "common.proto";
+
+enum GroupServiceStatus {
+  GSS_Ok = 0;
+  GSS_InvalidGroupInfo = 1;
+}
+
+message CreateGroupReq {
+  optional uint64 creator_uid = 1;
+  optional string group_name = 2;
+  optional string token = 15;
+}
+
+message CreateGroupRsp {
+  optional GroupServiceStatus status = 1;
+  optional uint64 uid = 2;
+}
+
+service Group {
+  option (opt_service_id) = 11;
+
+  rpc CreateGroup(CreateGroupReq) returns(CreateGroupRsp) {
+    option (opt_method_id) = 110;
+  }
+
+}

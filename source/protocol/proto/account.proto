@@ -1,0 +1,66 @@
+syntax = "proto2";
+
+package pcs;
+
+import "common.proto";
+
+enum AccountServiceStatus {
+  ASS_Ok = 0;
+  ASS_InvalidLoginInfo = 1;
+  ASS_ReachRegisterLimit = 2;
+  ASS_InvalidReisterInfo = 3;
+  ASS_InvalidResetInfo = 4;
+}
+
+message LoginReq {
+  optional string username = 1;
+  optional string password = 2;  // MD5 encoded
+}
+
+message LoginRsp {
+  optional AccountServiceStatus status = 1;
+  optional uint64 uid = 2;
+  optional string token = 15;
+}
+
+message RegisterReq {
+  optional string username = 1;
+  optional string password = 2;  // MD5 encoded
+  optional int32 reset_question = 3;
+  optional string reset_answer = 4;
+}
+
+message RegisterRsp {
+  optional AccountServiceStatus status = 1;
+  optional uint64 uid = 2;
+  optional string token = 15;
+}
+
+message ResetReq {
+  optional string username = 1;
+  optional uint64 uid = 2;
+  optional int32 reset_question = 3;
+  optional string reset_answer = 4;
+  optional string new_password = 5;  // MD5 encoded
+}
+
+message ResetRsp {
+  optional AccountServiceStatus status = 1;
+  optional uint64 uid = 2;
+}
+
+service Account {
+  option (opt_service_id) = 10;
+
+  rpc Login(LoginReq) returns(LoginRsp) {
+    option (opt_method_id) = 1;
+  }
+
+  rpc RegisterAccount(RegisterReq) returns(RegisterRsp) {
+    option (opt_method_id) = 2;
+  }
+
+  rpc ResetPassword(ResetReq) returns(ResetRsp) {
+    option (opt_method_id) = 3;
+  }
+}

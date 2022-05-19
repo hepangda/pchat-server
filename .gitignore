@@ -32,16 +32,19 @@
 *.app
 pchat-server
 
-# Shell Scripts
-*.sh
-
 # Test Files
 *test*
 tags.*
 
+# IDE Config
+.vscode
+cmake-build-debug
+.idea
 
-# VSCode Config
-*.json
-
-# Database
+# Generated Files
+source/protocol/*.pb.cc
+source/protocol/*.pb.h
 database_connstr.h
+
+# macOS Filesystem
+.DS_Store

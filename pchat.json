@@ -1,0 +1,12 @@
+{
+  "persistence": {
+    "pool_size": 3,
+    "connect_string": "db=pchat user=root"
+  },
+  "network": {
+    "router_bind_address": "tcp://127.0.0.1:18002",
+    "dealer_bind_address": "ipc://pchat_nm_dealer",
+    "rep_concurrency_count": 0,
+    "rep_concurrency_strategy": "hardware_limit"
+  }
+}

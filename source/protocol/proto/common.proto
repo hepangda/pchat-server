@@ -1,0 +1,44 @@
+syntax = "proto2";
+import "google/protobuf/descriptor.proto";
+
+package pcs;
+
+extend google.protobuf.MethodOptions {
+  optional int32 opt_method_id = 1000;
+}
+
+extend google.protobuf.ServiceOptions {
+  optional int32 opt_service_id = 1000;
+}
+
+enum PchatFlags {
+  PCF_None = 0x0;
+  PCF_NoService = 0x1;
+}
+
+message PchatEmpty {}
+
+message PchatPackage {
+  required uint64 flags = 15[default = 0];
+
+  required int32 service_id = 1;
+  required int32 method_id = 2;
+  required bytes package = 3;
+}
+
+message PersistenceManagerConfig {
+  optional uint32 pool_size = 1[default = 2];
+  optional string connect_string = 2[default = "db=pchat user=root"];
+}
+
+message NetworkManagerConfig {
+  optional string router_bind_address = 1[default = "tcp://127.0.0.1:18002"];
+  optional string dealer_bind_address = 2[default = "ipc://pchat_nm_dealer_ipc_addr"];
+  optional uint32 rep_concurrency_count = 3[default = 2];
+  optional string rep_concurrency_strategy = 4[default = "number"];
+}
+
+message PchatConfig {
+  optional PersistenceManagerConfig persistence = 1;
+  optional NetworkManagerConfig network = 2;
+}
